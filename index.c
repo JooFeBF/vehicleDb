@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_VEHICLES 50
+
 struct vehicle {
     char plate[10];
     char brand[20];
@@ -87,89 +89,49 @@ struct vehicle createVehicle() {
     return vehicleToAdd;
 }
 
-void addVehicle (const char *filename) {
+void addVehicle (struct vehicle *vehicles) {
   struct vehicle vehicleToAdd = createVehicle();
 
-  FILE *file;
+  struct vehicle *vehiclePtr = vehicles;
 
-  if ((file = fopen(filename, "ab+")) == NULL) {
-    printf("Error opening file\n");
-    return;
-  }
-
-  int total = 0;
-
-  if (fread(&total, sizeof(int), 1, file) != 1){
-    total++;
-
-    if(fwrite(&total, sizeof(int), 1, file) != 1){
-      printf("Coudln't write on file\n");
-      fclose(file);
-      return;
+  int vehicleNumber = 0;
+  while(1){
+    if(strcmp((*vehiclePtr).plate, "")  == 0 || (*vehiclePtr).state == 'E'){
+      *vehiclePtr = vehicleToAdd;
+      break;
     }
-
-    if(fwrite(&vehicleToAdd, sizeof(struct vehicle), 1, file) != 1){
-      printf("Couldn't write on file\n");
-      fclose(file);
-      return;
-    }
-
-    printf("Vehicle added succesfully\n");
-    fclose(file);
-    return;
+    vehicleNumber++;
+    if(vehicleNumber > MAX_VEHICLES) {
+      printf("Max vehicles excedeed\n");
+      break;
+    };
+    vehiclePtr += vehicleNumber;
   }
-
-  total++;
-
-  if(fwrite(&total, sizeof(int), 1, file) != 1){
-    printf("Coudln't write on file\n");
-    fclose(file);
-    return;
-  }
-
-  if(fwrite(&vehicleToAdd, sizeof(struct vehicle), 1, file) != 1){
-    printf("Couldn't write on file\n");
-    fclose(file);
-    return;
-  }
-
-  fclose(file);
-  printf("Vehicle added succesfully\n");
 }
 
-void printVehicles (const char *filename) {
-  FILE *file;
-  if ((file = fopen(filename, "rb")) == NULL) {
-    printf("Error opening file\n");
-    fclose(file);
-    return;
-  }
-  int total = 0;
+void printVehicles (struct vehicle *vehicles) {
+  struct vehicle *vehiclePtr = vehicles;
 
-  if (fread(&total, sizeof(int), 1, file) != 1) {
-    printf("Error reading from file\n");
-    fclose(file);
-  }
-  struct vehicle currentVehicle;
-  for(int i = 0; i < total; i++) {
-    if (fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-      printf("Error reading from file");
-      fclose(file);
-      return;
-    }
-    if (currentVehicle.state == 'E') {
+  int vehicleNumber = 0;
+
+  while(1) {
+    if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+    if ((*vehiclePtr).state == 'E') {
       continue;
     }
-    printf("Vehicle %d\n", i + 1);
-    printf("Plate: %s\n", currentVehicle.plate);
-    printf("Brand: %s\n", currentVehicle.brand);
-    printf("Model: %s\n", currentVehicle.model);
-    printf("Year: %i\n", currentVehicle.year);
-    printf("Color: %s\n", currentVehicle.color);
-    printf("Type: %c\n", currentVehicle.type);
-    printf("Value: %d\n", currentVehicle.value);
-    printf("State: %c\n", currentVehicle.state);
+    printf("Vehicle %d\n", vehicleNumber + 1);
+    printf("Plate: %s\n", (*vehiclePtr).plate);
+    printf("Brand: %s\n", (*vehiclePtr).brand);
+    printf("Model: %s\n", (*vehiclePtr).model);
+    printf("Year: %i\n", (*vehiclePtr).year);
+    printf("Color: %s\n", (*vehiclePtr).color);
+    printf("Type: %c\n", (*vehiclePtr).type);
+    printf("Value: %d\n", (*vehiclePtr).value);
+    printf("State: %c\n", (*vehiclePtr).state);
     printf("\n");
+    vehicleNumber++;
+    if(vehicleNumber > MAX_VEHICLES) break;
+    vehiclePtr += vehicleNumber;
   }
 }
 
@@ -186,325 +148,183 @@ char *toLower(const char *str) {
     return lower;
 }
 
-void printVehiclesByModel (const char *filename, const char *model) {
-  int total = 0;
-  FILE *file;
-
-
-  if ((file = fopen(filename, "rb")) == NULL) {
-    printf("Error opening file\n");
-    fclose(file);
-    return;
-  }
-
+void printVehiclesByModel (struct vehicle *vehicles, const char *model) {
   size_t len = strlen(model);
   char *lowerModel = toLower(model);
 
-  if(fread(&total, sizeof(int), 1, file) != 1) printf("Error reading from file \n");
+  struct vehicle *vehiclePtr = vehicles;
 
-  struct vehicle currentVehicle;
+  int vehicleNumber = 0;
 
-  for(int i =0; i < total; i++){
-    if(fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-      printf("Error reading from file\n");
-      fclose(file);
-      return;
-    }
-
-    if (currentVehicle.state  == 'E') {
+  while(1){
+    if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+    if ((*vehiclePtr).state  == 'E') {
       continue;
     }
-    char *lower = toLower(currentVehicle.model);
+    char *lower = toLower((*vehiclePtr).model);
     if (strncmp(lower, lowerModel, len) == 0) {
-      printf("Vehicle %d\n", i + 1);
-      printf("Plate: %s\n", currentVehicle.plate);
-      printf("Brand: %s\n", currentVehicle.brand);
-      printf("Model: %s\n", currentVehicle.model);
-      printf("Year: %i\n", currentVehicle.year);
-      printf("Color: %s\n", currentVehicle.color);
-      printf("Type: %c\n", currentVehicle.type);
-      printf("Value: %d\n", currentVehicle.value);
-      printf("State: %c\n", currentVehicle.state);
+      printf("Vehicle %d\n", vehicleNumber + 1);
+      printf("Plate: %s\n", (*vehiclePtr).plate);
+      printf("Brand: %s\n", (*vehiclePtr).brand);
+      printf("Model: %s\n", (*vehiclePtr).model);
+      printf("Year: %i\n", (*vehiclePtr).year);
+      printf("Color: %s\n", (*vehiclePtr).color);
+      printf("Type: %c\n", (*vehiclePtr).type);
+      printf("Value: %d\n", (*vehiclePtr).value);
+      printf("State: %c\n", (*vehiclePtr).state);
       printf("\n");
-
+    }
+    vehicleNumber++;
+    vehiclePtr += vehicleNumber;
   }
-  }
-  fclose(file);
 }
 
-void printVehiclesByBrand(const char *filename, const char *brand) {
-    FILE *file;
-    if ((file = fopen(filename, "rb")) == NULL) {
-        printf("Error opening file\n");
-        return;
-    }
+void printVehiclesByBrand(struct vehicle *vehicles, const char *brand) {
+    struct vehicle *vehiclePtr = vehicles;
+    int vehicleNumber = 0;
 
-    int total = 0;
-    if (fread(&total, sizeof(int), 1, file) != 1) {
-        printf("Error reading from file\n");
-        return;
-    }
-
-    struct vehicle currentVehicle;
     size_t len = strlen(brand);
     char *lowerBrand = toLower(brand);
 
-    for (int i = 0; i < total; i++) {
-        if (fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-            printf("Error reading from file\n");
-            fclose(file);
-            return;
-        }
-
-        if (currentVehicle.state == 'E') {
+    while (1) {
+        if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+        if ((*vehiclePtr).state == 'E') {
             continue;
         }
 
-        char *lower = toLower(currentVehicle.brand);
+        char *lower = toLower((*vehiclePtr).brand);
         if (strncmp(lower, lowerBrand, len) == 0) {
-            printf("Vehicle %d\n", i + 1);
-            printf("Plate: %s\n", currentVehicle.plate);
-            printf("Brand: %s\n", currentVehicle.brand);
-            printf("Model: %s\n", currentVehicle.model);
-            printf("Year: %i\n", currentVehicle.year);
-            printf("Color: %s\n", currentVehicle.color);
-            printf("Type: %c\n", currentVehicle.type);
-            printf("Value: %d\n", currentVehicle.value);
-            printf("State: %c\n", currentVehicle.state);
+            printf("Vehicle %d\n", vehicleNumber + 1);
+            printf("Plate: %s\n", (*vehiclePtr).plate);
+            printf("Brand: %s\n", (*vehiclePtr).brand);
+            printf("Model: %s\n", (*vehiclePtr).model);
+            printf("Year: %i\n", (*vehiclePtr).year);
+            printf("Color: %s\n", (*vehiclePtr).color);
+            printf("Type: %c\n", (*vehiclePtr).type);
+            printf("Value: %d\n", (*vehiclePtr).value);
+            printf("State: %c\n", (*vehiclePtr).state);
             printf("\n");
         }
+        vehicleNumber++;
+        vehiclePtr += vehicleNumber;
         free(lower);
     }
     free(lowerBrand);
-    fclose(file);
 }
 
-void printVehiclesByType (const char *filename, const char type) {
-  int total = 0;
+void printVehiclesByType (struct vehicle *vehicles, char type) {
+    struct vehicle *vehiclePtr = vehicles;
+    int vehicleNumber = 0;
 
-  FILE *file;
+    while (1) {
+        if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+        if ((*vehiclePtr).state == 'E') {
+            continue;
+        }
 
-  if ((file = fopen(filename, "rb")) == NULL) {
-    printf("Error opening file\n");
-    fclose(file);
-    return;
-  }
-
-  if ((fread(&total, sizeof(int), 1, file)) != 1) {
-    printf("Error reading from file\n");
-    fclose(file);
-    return;
-  }
-
-  struct vehicle currentVehicle;
-
-  for (int i = 0; i < total; i++) {
-    if ((fread(&currentVehicle, sizeof(struct vehicle), 1, file)) != 1) {
-      printf("Error reading from file\n");
-      fclose(file);
-      return;
+        if ((*vehiclePtr).type == type) {
+            printf("Vehicle %d\n", vehicleNumber + 1);
+            printf("Plate: %s\n", (*vehiclePtr).plate);
+            printf("Brand: %s\n", (*vehiclePtr).brand);
+            printf("Model: %s\n", (*vehiclePtr).model);
+            printf("Year: %i\n", (*vehiclePtr).year);
+            printf("Color: %s\n", (*vehiclePtr).color);
+            printf("Type: %c\n", (*vehiclePtr).type);
+            printf("Value: %d\n", (*vehiclePtr).value);
+            printf("State: %c\n", (*vehiclePtr).state);
+            printf("\n");
+        }
+        vehicleNumber++;
+        vehiclePtr += vehicleNumber;
     }
-
-    if (currentVehicle.state == 'E') {
-      continue;
-    }
-
-    if (currentVehicle.type == type) {
-      printf("Vehicle %d\n", i + 1);
-      printf("Plate: %s\n", currentVehicle.plate);
-      printf("Brand: %s\n", currentVehicle.brand);
-      printf("Model: %s\n", currentVehicle.model);
-      printf("Year: %i\n", currentVehicle.year);
-      printf("Color: %s\n", currentVehicle.color);
-      printf("Type: %c\n", currentVehicle.type);
-      printf("Value: %d\n", currentVehicle.value);
-      printf("State: %c\n", currentVehicle.state);
-      printf("\n");
-    }
-  }
-  fclose(file);
 }
 
-void printVehiclesByPriceRange (const char *filename, int min, int max) {
-    if(min > max) {
+void printVehiclesByPriceRange (struct vehicle *vehicles, int min, int max) {
+    struct vehicle *vehiclePtr = vehicles;
+    int vehicleNumber = 0;
+
+    if (min > max) {
         printf("Invalid price range\n");
         return;
     }
-    FILE *file;
-    if ((file = fopen(filename, "rb")) == NULL) {
-        printf("Error opening file\n");
-        fclose(file);
-        return;
-    }
 
-    int total = 0;
-    if (fread(&total, sizeof(int), 1, file) != 1) {
-        printf("Error reading from file\n");
-        fclose(file);
-        return;
-    }
-
-    struct vehicle currentVehicle;
-
-    for (int i = 0; i < total; i++) {
-        if (fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-            printf("Error reading from file\n");
-            fclose(file);
-            return;
-        }
-
-        if (currentVehicle.state == 'E') {
+    while (1) {
+        if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+        if ((*vehiclePtr).state == 'E') {
             continue;
         }
 
-        if (currentVehicle.value >= min && currentVehicle.value <= max) {
-            printf("Vehicle %d\n", i + 1);
-            printf("Plate: %s\n", currentVehicle.plate);
-            printf("Brand: %s\n", currentVehicle.brand);
-            printf("Model: %s\n", currentVehicle.model);
-            printf("Year: %i\n", currentVehicle.year);
-            printf("Color: %s\n", currentVehicle.color);
-            printf("Type: %c\n", currentVehicle.type);
-            printf("Value: %d\n", currentVehicle.value);
-            printf("State: %c\n", currentVehicle.state);
+        if ((*vehiclePtr).value >= min && (*vehiclePtr).value <= max) {
+            printf("Vehicle %d\n", vehicleNumber + 1);
+            printf("Plate: %s\n", (*vehiclePtr).plate);
+            printf("Brand: %s\n", (*vehiclePtr).brand);
+            printf("Model: %s\n", (*vehiclePtr).model);
+            printf("Year: %i\n", (*vehiclePtr).year);
+            printf("Color: %s\n", (*vehiclePtr).color);
+            printf("Type: %c\n", (*vehiclePtr).type);
+            printf("Value: %d\n", (*vehiclePtr).value);
+            printf("State: %c\n", (*vehiclePtr).state);
             printf("\n");
         }
+        vehicleNumber++;
+        vehiclePtr += vehicleNumber;
     }
-    fclose(file);
-  }
+}
 
-void modifyVehicleValue (const char *filename, const char *plate, int newValue) {
-    FILE *file;
-    if ((file = fopen(filename, "rb+")) == NULL) {
-        printf("Error opening file\n");
-        fclose(file);
-        return;
-    }
+void modifyVehicleValue (struct vehicle *vehicles, const char *plate, int newValue) {
+    struct vehicle *vehiclePtr = vehicles;
+    int vehicleNumber = 0;
 
-    int total = 0;
-
-    if (fread(&total, sizeof(int), 1, file) != 1) {
-        printf("Error reading from file\n");
-        fclose(file);
-        return;
-    }
-
-    struct vehicle currentVehicle;
-
-    for (int i = 0; i < total; i++) {
-        if (fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-            printf("Error reading from file\n");
-            break;
-        }
-
-        if (currentVehicle.state == 'E') {
+    while (1) {
+        if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+        if ((*vehiclePtr).state == 'E') {
             continue;
         }
 
-        if (strcmp(currentVehicle.plate, plate) == 0) {
-            currentVehicle.value = newValue;
-
-            fseek(file, sizeof(int) + i * sizeof(struct vehicle), SEEK_SET);
-
-            if (fwrite(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-                printf("Error writing to file\n");
-            } else {
-                printf("Vehicle value updated\n");
-            }
-
-            fclose(file);
+        if (strcmp((*vehiclePtr).plate, plate) == 0) {
+            (*vehiclePtr).value = newValue;
+            printf("Vehicle value updated\n");
             return;
         }
+        vehicleNumber++;
+        vehiclePtr += vehicleNumber;
     }
-  }
-
-void modifyVehicleType (const char *filename, const char *plate, char newType) {
-  int total = 0;
-  FILE *file;
-
-  if ((file = fopen(filename, "rb+")) == NULL) {
-    printf("Error opening file\n");
-    fclose(file);
-    return;
-  }
-
-  if (fread(&total, sizeof(int), 1, file) != 1) {
-    printf("Error reading from file\n");
-    fclose(file);
-    return;
-  }
-
-  struct vehicle currentVehicle;
-
-  for (int i = 0; i < total; i++){
-    if (fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-      printf("Error reading from file\n");
-      fclose(file);
-      return;
-    }
-    if (currentVehicle.state == 'E') {
-      continue;
-    }
-    if (strcmp(currentVehicle.plate, plate) == 0) {
-      currentVehicle.type = newType;
-
-      fseek(file, sizeof(int) + i * sizeof(struct vehicle), SEEK_SET);
-
-      if (fwrite(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-        printf("Error writing to file\n");
-      } else {
-        printf("Vehicle type updated\n");
-      }
-
-      fclose(file);
-      return;
-    }
-  }
 }
 
-void deleteVehicle (const char *filename, const char *plate) {
-  FILE *file;
-  if ((file = fopen(filename, "rb+")) == NULL) {
-    printf("Error opening file\n");
-    fclose(file);
-    return;
-  }
+void modifyVehicleType (struct vehicle *vehicles, const char *plate, char newType) {
+    struct vehicle *vehiclePtr = vehicles;
+    int vehicleNumber = 0;
 
-  int total = 0;
+    while (1) {
+        if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+        if ((*vehiclePtr).state == 'E') {
+            continue;
+        }
 
-  if (fread(&total, sizeof(int), 1, file) != 1) {
-    printf("Error reading from file\n");
-    fclose(file);
-    return;
-  }
-
-  struct vehicle currentVehicle;
-
-  for (int i = 0; i < total; i++) {
-    if (fread(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-      printf("Error reading from file\n");
-      break;
+        if (strcmp((*vehiclePtr).plate, plate) == 0) {
+            (*vehiclePtr).type = newType;
+            printf("Vehicle type updated\n");
+            return;
+        }
+        vehicleNumber++;
+        vehiclePtr += vehicleNumber;
     }
+}
 
-    if (currentVehicle.state == 'E') {
-      continue;
+void deleteVehicle (struct vehicle *vehicles, const char *plate) {
+    struct vehicle *vehiclePtr = vehicles;
+    int vehicleNumber = 0;
+
+    while (1) {
+        if(strcmp((*vehiclePtr).plate, "") == 0 || vehicleNumber > MAX_VEHICLES) break;
+        if (strcmp((*vehiclePtr).plate, plate) == 0) {
+            (*vehiclePtr).state = 'E';
+            printf("Vehicle deleted\n");
+            return;
+        }
+        vehicleNumber++;
+        vehiclePtr += vehicleNumber;
     }
-
-    if (strcmp(currentVehicle.plate, plate) == 0) {
-      currentVehicle.state = 'E';
-
-      fseek(file, sizeof(int) + i * sizeof(struct vehicle), SEEK_SET);
-
-      if (fwrite(&currentVehicle, sizeof(struct vehicle), 1, file) != 1) {
-        printf("Error writing to file\n");
-      } else {
-        printf("Vehicle deleted\n");
-      }
-
-      fclose(file);
-      return;
-    }
-  }
 }
 
 int getOption() {
@@ -533,6 +353,7 @@ int getOption() {
 }
 
 int main() {
+    struct vehicle vehicles[50] = {0};
     int option;
     while (1) {
         printf("\n");
@@ -553,30 +374,30 @@ int main() {
 
         switch (option) {
             case 1:
-                addVehicle("vehicles.dat");
+                addVehicle(vehicles);
                 break;
             case 2:
-                printVehicles("vehicles.dat");
+                printVehicles(vehicles);
                 break;
             case 3:
                 {
                     char brand[20];
                     getStringInput("Enter brand: ", brand, sizeof(brand), "Brand cannot be empty");
-                    printVehiclesByBrand("vehicles.dat", brand);
+                    printVehiclesByBrand(vehicles, brand);
                 }
                 break;
             case 4:
                 {
                     char model[20];
                     getStringInput("Enter model: ", model, sizeof(model), "Model cannot be empty");
-                    printVehiclesByModel("vehicles.dat", model);
+                    printVehiclesByModel(vehicles, model);
                 }
                 break;
             case 5:
                 {
                     char type;
                     getValidatedCharInput("Enter type (P or C): ", &type, "Type must be P or C", "PC");
-                    printVehiclesByType("vehicles.dat", type);
+                    printVehiclesByType(vehicles, type);
                 }
                 break;
             case 6:
@@ -584,7 +405,7 @@ int main() {
                     int min, max;
                     getValidatedInput("Enter min price: ", &min, "Price must be a positive number", 0);
                     getValidatedInput("Enter max price: ", &max, "Price must be a positive number", 0);
-                    printVehiclesByPriceRange("vehicles.dat", min, max);
+                    printVehiclesByPriceRange(vehicles, min, max);
                 }
                 break;
             case 7:
@@ -593,7 +414,7 @@ int main() {
                     int newValue;
                     getStringInput("Enter plate: ", plate, sizeof(plate), "Plate cannot be empty");
                     getValidatedInput("Enter new value: ", &newValue, "Value must be a positive number", 0);
-                    modifyVehicleValue("vehicles.dat", plate, newValue);
+                    modifyVehicleValue(vehicles, plate, newValue);
                 }
                 break;
             case 8:
@@ -602,14 +423,14 @@ int main() {
                     char newType;
                     getStringInput("Enter plate: ", plate, sizeof(plate), "Plate cannot be empty");
                     getValidatedCharInput("Enter new type (P or C): ", &newType, "Type must be P or C", "PC");
-                    modifyVehicleType("vehicles.dat", plate, newType);
+                    modifyVehicleType(vehicles, plate, newType);
                 }
                 break;
             case 9:
                 {
                     char plate[10];
                     getStringInput("Enter plate: ", plate, sizeof(plate), "Plate cannot be empty");
-                    deleteVehicle("vehicles.dat", plate);
+                    deleteVehicle(vehicles, plate);
                 }
                 break;
             default:
